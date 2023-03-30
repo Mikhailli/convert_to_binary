@@ -1,7 +1,5 @@
 from PIL import Image
 import numpy as np
-import dash
-from dash import html
 
 rgb = [[46, 58, 35],
        [255, 24, 46],
@@ -14,7 +12,7 @@ rgb = [[46, 58, 35],
        [225, 255, 24],
        [120, 88, 64]]
 
-image = Image.open('D:\\black_and_white.jpg', mode='r')
+image = Image.open('D:\\geometry_figures.jpg', mode='r')
 src = np.array(image)
 
 n_sum = src.shape[0] * src.shape[1]
@@ -85,37 +83,54 @@ for i in range(src.shape[0]):
 data.save('assets\\bw_gf.png')
 
 
-array = np.zeros((src.shape[0] + 2, src.shape[1] + 2), dtype="uint8")
+arr = np.zeros((src.shape[0] + 2, src.shape[1] + 2), dtype="uint16")
 for i in range(src.shape[0]):
     for j in range(src.shape[1]):
-        if src[:, :, 0][i][j] == 255:
-            array[i + 1][j + 1] = 1
+        if src[:, :, 0][i][j] == 0:
+            arr[i + 1][j + 1] = 1
+        elif src[:, :, 0][i][j] == 255:
+            arr[i + 1][j + 1] = 0
 
+dictionary = {}
+counter = 1
+for i in range(len(arr) - 2):
+    for j in range(len(arr[i]) - 2):
+        if arr[i + 1][j + 1] == 1:
+            if arr[i][j + 1] != 0:
+                if arr[i + 1][j] != 0:
+                    if arr[i + 1][j] < arr[i][j + 1]:
+                        dictionary[arr[i][j + 1]] = arr[i + 1][j]
+                        arr[i + 1][j + 1] = arr[i + 1][j]
+                    elif arr[i + 1][j] > arr[i][j + 1]:
+                        dictionary[arr[i + 1][j]] = arr[i][j + 1]
+                        arr[i + 1][j + 1] = arr[i][j + 1]
+                    else:
+                        arr[i + 1][j + 1] = arr[i][j + 1]
+                else:
+                    arr[i + 1][j + 1] = arr[i][j + 1]
+            elif arr[i + 1][j] != 0:
+                arr[i + 1][j + 1] = arr[i + 1][j]
+            else:
+                counter += 1
+                arr[i + 1][j + 1] = counter
+                if counter not in dictionary.keys():
+                    dictionary[counter] = 0
 
-def recursive(array, height, width, counter):
-    if array[height][width] == 1:
-        array[height][width] = counter
-        if array[height - 1][width] == 1:
-            recursive(array, height - 1, width, counter)
-        if array[height][width + 1] == 1:
-            recursive(array, height, width + 1, counter)
-        if array[height + 1][width] == 1:
-            recursive(array, height + 1, width, counter)
-        if array[height][width - 1] == 1:
-            recursive(array, height, width - 1, counter)
+for key in dictionary.keys().__reversed__():
+    for i in range(len(arr) - 2):
+        for j in range(len(arr[i]) - 2):
+            if arr[i + 1][j + 1] == key and dictionary[key] != 0:
+                arr[i + 1][j + 1] = dictionary[key]
 
+left_numbers = []
+for key in dictionary.keys():
+    if dictionary[key] == 0:
+        left_numbers.append(key)
 
-counter = 2
 for i in range(src.shape[0]):
     for j in range(src.shape[1]):
-        recursive(array, i + 1, j + 1, counter)
-        if array[i + 1][j + 1] == counter:
-            counter += 1
-
-for i in range(src.shape[0]):
-    for j in range(src.shape[1]):
-        for k in range(counter - 1):
-            if array[i + 1][j + 1] == k + 2:
+        for k in range(len(left_numbers)):
+            if arr[i + 1][j + 1] == left_numbers[k]:
                 src[:, :, 0][i][j] = rgb[k][0]
                 src[:, :, 1][i][j] = rgb[k][1]
                 src[:, :, 2][i][j] = rgb[k][2]
@@ -124,19 +139,4 @@ data = Image.fromarray(src)
 data.save('assets\\colored_gf.png')
 print(counter - 2)
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.layout = html.Div(children=[
-    html.Div([
-        html.Img(width='50%', id='initial_image', src='assets\\bw_gf.png'),
-
-    ], style={'textAlign': 'center'}),
-    html.Div([
-        html.Img(width='50%', id='new_image', src='assets\\colored_gf.png'),
-
-    ], style={'textAlign': 'center'})
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
