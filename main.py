@@ -127,6 +127,9 @@ for key in dictionary.keys():
     if dictionary[key] == 0:
         left_numbers.append(key)
 
+square = np.zeros(len(left_numbers), dtype=int)
+coord_x_sum = np.zeros(len(left_numbers), dtype=int)
+coord_y_sum = np.zeros(len(left_numbers), dtype=int)
 for i in range(src.shape[0]):
     for j in range(src.shape[1]):
         for k in range(len(left_numbers)):
@@ -134,9 +137,16 @@ for i in range(src.shape[0]):
                 src[:, :, 0][i][j] = rgb[k][0]
                 src[:, :, 1][i][j] = rgb[k][1]
                 src[:, :, 2][i][j] = rgb[k][2]
+                square[k] += 1
+                coord_x_sum[k] += j
+                coord_y_sum[k] += i
+
 
 data = Image.fromarray(src)
 data.save('assets\\colored_gf.png')
-print(counter - 2)
-
-
+print("Количество объектов равно {}".format(len(left_numbers)))
+for i in range(len(coord_y_sum)):
+    print("__________________________________________________________________________________")
+    print("Площадь равна: {}".format(square[i]))
+    print("Координаты центра масс: ({};{})".format(round(coord_x_sum[i] / square[i], 2), round(coord_y_sum[i] / square[i], 2)))
+    print("__________________________________________________________________________________")
