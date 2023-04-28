@@ -1,3 +1,6 @@
+import sys
+from colorama import Style
+
 from PIL import Image
 import numpy as np
 
@@ -12,7 +15,7 @@ rgb = [[46, 58, 35],
        [225, 255, 24],
        [120, 88, 64]]
 
-image = Image.open('D:\\geometry_figures.jpg', mode='r')
+image = Image.open('D:\\geometry_figures.bmp', mode='r')
 src = np.array(image)
 
 n_sum = src.shape[0] * src.shape[1]
@@ -130,10 +133,23 @@ for key in dictionary.keys():
 square = np.zeros(len(left_numbers), dtype=int)
 coord_x_sum = np.zeros(len(left_numbers), dtype=int)
 coord_y_sum = np.zeros(len(left_numbers), dtype=int)
+min_x = np.full((len(left_numbers)), 2**20, dtype=int)
+max_x = np.full((len(left_numbers)), -1, dtype=int)
+min_y = np.full((len(left_numbers)), 2**20, dtype=int)
+max_y = np.full((len(left_numbers)), -1, dtype=int)
+
 for i in range(src.shape[0]):
     for j in range(src.shape[1]):
         for k in range(len(left_numbers)):
             if arr[i + 1][j + 1] == left_numbers[k]:
+                if i + 1 > max_y[k]:
+                    max_y[k] = i + 1
+                if i + 1 < min_y[k]:
+                    min_y[k] = i + 1
+                if j + 1 > max_x[k]:
+                    max_x[k] = j + 1
+                if j + 1 < min_x[k]:
+                    min_x[k] = j + 1
                 src[:, :, 0][i][j] = rgb[k][0]
                 src[:, :, 1][i][j] = rgb[k][1]
                 src[:, :, 2][i][j] = rgb[k][2]
@@ -145,8 +161,54 @@ for i in range(src.shape[0]):
 data = Image.fromarray(src)
 data.save('assets\\colored_gf.png')
 print("Количество объектов равно {}".format(len(left_numbers)))
+
+square_roots_of_2 = np.zeros(len(left_numbers), dtype=int)
+perimeter = np.zeros(len(left_numbers), dtype=float)
+
+for k in range(len(left_numbers)):
+    for i in range(src.shape[0]):
+        for j in range(src.shape[1]):
+            if min_y[k] <= i + 2 <= max_y[k] + 3 and min_x[k] <= j + 2 <= max_x[k] + 3:
+                if arr[i + 1][j + 1] != left_numbers[k]:
+                    counter = 0
+                    if arr[i + 1][j] == left_numbers[k]:
+                        counter += 1
+                    if arr[i][j + 1] == left_numbers[k]:
+                        counter += 1
+                    if arr[i + 1][j + 2] == left_numbers[k]:
+                        counter += 1
+                    if arr[i + 2][j + 1] == left_numbers[k]:
+                        counter += 1
+                    if counter == 2:
+                        square_roots_of_2[k] += 1
+                    else:
+                        perimeter[k] += counter
+
+for i in range(len(perimeter)):
+    perimeter[i] += float(square_roots_of_2[i]) * float(2**(1/2))
+
+
 for i in range(len(coord_y_sum)):
     print("__________________________________________________________________________________")
+    if i == 0:
+        print("\033[32mКвадрат")
+    if i == 1:
+        print("\033[32mКруг")
+    if i == 2:
+        print("\033[32mПравильный шестиугольник")
+    if i == 3:
+        print("\033[32mРомб")
+    if i == 4:
+        print("\033[32mТреугольник")
+    if i == 5:
+        print("\033[32mОвал")
+    if i == 6:
+        print("\033[32mЗвезда")
+    if i == 7:
+        print("\033[32mПрямоугольник")
+    print(Style.RESET_ALL)
     print("Площадь равна: {}".format(square[i]))
+    print("Периметр равен: {}".format(round(perimeter[i], 2)))
+    print("Коэффициент округлости равен {}".format(round(perimeter[i] * perimeter[i] / square[i], 2)))
     print("Координаты центра масс: ({};{})".format(round(coord_x_sum[i] / square[i], 2), round(coord_y_sum[i] / square[i], 2)))
     print("__________________________________________________________________________________")
